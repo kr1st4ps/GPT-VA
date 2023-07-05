@@ -1,5 +1,7 @@
 import openai
 import configparser
+from gtts import gTTS
+from playsound import playsound
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -23,7 +25,11 @@ def chatgpt(input):
 
 query = ""
 while True:
-    query = input("Prompt: ")
+    query = input("Ask something: ")
     if query == "e":
         break
-    print(f"> {chatgpt(query)}")
+    reply = chatgpt(query)
+    print(f"> {reply}")
+    speech = gTTS(text = reply)
+    speech.save('reply.mp3')
+    playsound('reply.mp3')
