@@ -2,14 +2,17 @@ import openai
 import configparser
 from gtts import gTTS
 from playsound import playsound
+import speech_recognition as sr
 
 config = configparser.ConfigParser()
 config.read("config.ini")
 
+recognizer = sr.Recognizer()
+
 openai.api_key = str(config["USER"]["OPENAI_KEY"])
 
 messages = [
-    {"role": "system", "content": "You are a an AI Assistant"},
+    {"role": "system", "content": config["AI"]["INSTRUCTIONS"]},
 ]
 
 def chatgpt(input):
@@ -23,13 +26,26 @@ def chatgpt(input):
         return reply
 
 
-query = ""
+query = None
+reply = None
 while True:
-    query = input("Ask something: ")
-    if query == "e":
-        break
-    reply = chatgpt(query)
-    print(f"> {reply}")
+    with sr.Microphone() as source:
+        audio = recognizer.listen(source)
+    try:
+        query = recognizer.recognize_google(audio)
+    except sr.UnknownValueError:
+        reply = "Sorry, I could not understand audio."
+
+    print(f"<User> {query}")
+
+    if not reply:
+        reply = chatgpt(query)
+    
     speech = gTTS(text = reply)
     speech.save('reply.mp3')
+    print(f"<AI> {reply}")
     playsound('reply.mp3')
+    
+    query = None
+    reply = None
+    
